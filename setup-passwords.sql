@@ -45,7 +45,10 @@ CREATE TABLE user_info (
     -- represented as 2 characters.  Thus, 256 / 8 * 2 = 64.
     -- We can use BINARY or CHAR here; BINARY simply has a different
     -- definition for comparison/sorting than CHAR.
-    password_hash BINARY(64) NOT NULL
+    password_hash BINARY(64) NOT NULL,
+
+    -- whether is an admin, if is admin, is_admin is 1, else 0
+    is_admin TINYINT(1) NOT NULL
 );
 
 -- [Problem 1a]
@@ -55,7 +58,7 @@ CREATE TABLE user_info (
 DROP PROCEDURE IF EXISTS sp_add_user;
 
 DELIMITER !
-CREATE PROCEDURE sp_add_user(new_username VARCHAR(20), password VARCHAR(20))
+CREATE PROCEDURE sp_add_user(new_username VARCHAR(20), password VARCHAR(20), is_admin TINYINT(1))
 proc_label:BEGIN
   DECLARE salt CHAR(8);
   IF new_username IN (SELECT username FROM user_info) THEN LEAVE proc_label;
@@ -63,7 +66,7 @@ proc_label:BEGIN
   
   SELECT make_salt(8) INTO salt;
   INSERT INTO user_info (
-	SELECT new_username, salt, SHA2(CONCAT(salt, password), 256)
+	SELECT new_username, salt, SHA2(CONCAT(salt, password), 256), is_admin
   );
 END !
 DELIMITER ;
@@ -97,8 +100,8 @@ DELIMITER ;
 -- [Problem 1c]
 -- Add at least two users into your user_info table so that when we run this file,
 -- we will have examples users in the database.
-CALL sp_add_user('tommyfan34', 'tfpswd');
-CALL sp_add_user('NJUWJJ', 'wjjpswd');
+CALL sp_add_user('tommyfan34', 'tfpswd', 0);
+CALL sp_add_user('NJUWJJ', 'wjjpswd', 1);
 
 
 -- [Problem 1d]
