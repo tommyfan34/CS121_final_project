@@ -14,6 +14,7 @@ We modified the original data and produced the following 5 csv files.
 3. players.csv
 4. games_details.csv
 5. ranking.csv
+
 The data is too large and exceeds the file size limits for CodePost, therefore please pull the data from the github
 ```bash
 git clone https://github.com/tommyfan34/CS121_final_project
