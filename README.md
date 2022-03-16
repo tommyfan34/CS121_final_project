@@ -19,6 +19,8 @@ We modified the original data and produced the following 5 csv files.
 ```bash
 $ cd your-files
 $ mysql
+mysql> CREATE DATABASE nba;
+mysql> USE nba;
 mysql> source setup.sql;
 mysql> source load-data.sql;
 mysql> source setup-passwords.sql;
