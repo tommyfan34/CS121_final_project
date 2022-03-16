@@ -68,7 +68,7 @@ class app:
             print("  (l) - Log in")
         else:
             print("  (p) - Look up a player's stats for a given year")
-            print("  (s) - Get the score leader for each time for a given year")
+            print("  (s) - Get the score leader for each team for a given year")
             print("  (g) - Show the game stats of a team on a given date")
             if self.logged_user.is_admin:
                 print("  (t) - Change the information of a team")
