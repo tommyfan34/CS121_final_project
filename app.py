@@ -7,6 +7,7 @@ import mysql.connector
 # error-handling
 import mysql.connector.errorcode as errorcode
 from getpass import getpass
+from prettytable import PrettyTable
 
 """
 class for the user
@@ -66,6 +67,8 @@ class app:
         if not self.logged_in:
             print("  (l) - Log in")
         else:
+            print("  (p) - Look up a player's stats for a given year")
+            print("  (s) - Get the score leader for each time for a given year")
             print("  (c) - Change password")
             print("  (o) - Log out")
         print("  (q) - Exit program")
@@ -85,6 +88,85 @@ class app:
             self.log_out()
         elif self.logged_in and input_val == 'c':
             self.change_password()
+        elif self.logged_in and input_val == 'p':
+            self.get_player_stats()
+        elif self.logged_in and input_val == 's':
+            self.get_score_leader()
+
+    def get_player_stats(self):
+        """
+        get the player's stats for a given year
+        """
+        player = input("Type the player's name (e.g. Kobe Bryant):\n")
+        year = input("Type the year of the stats you want to look up, if does not specify, all year's stats will be given:\n")
+        t = PrettyTable(['Year', 'Player', 'Avg Pts', 'Avg Reb', 'Avg Ast', 'Avg Stl', 'Avg Blk', 'Avg Turnover', 'Avg Foul'])
+        if year != "":
+            sql = """
+            SELECT player_name, AVG(PTS) AS avg_points, 
+                AVG(OREB+DREB) AS avg_rebounds, AVG(AST) AS avg_assists, 
+                AVG(STL) AS avg_steals, AVG(BLK) AS avg_blocks, 
+                AVG(turnover) AS avg_turnovers, AVG(PF)AS avg_personal_fouls 
+            FROM game_details NATURAL INNER JOIN players NATURAL INNER JOIN games
+            WHERE player_name='%s' AND YEAR(game_date_EST) = %s
+            GROUP BY player_id, player_name;
+            """ % (player, year, )
+            rows = self.sql_helper(sql)
+            if len(rows) == 0:
+                print("No results found :(")
+            else:
+                r = list(rows[0])
+                r.insert(0, year)
+                t.add_row(r)
+                print(t)
+        else:
+            sql = """
+            SELECT YEAR(game_date_EST), player_name, AVG(PTS) AS avg_points, 
+                AVG(OREB+DREB) AS avg_rebounds, AVG(AST) AS avg_assists, 
+                AVG(STL) AS avg_steals, AVG(BLK) AS avg_blocks, 
+                AVG(turnover) AS avg_turnovers, AVG(PF)AS avg_personal_fouls 
+            FROM game_details NATURAL INNER JOIN players NATURAL INNER JOIN games
+            WHERE player_name='%s' GROUP BY player_id, player_name, YEAR(game_date_EST)
+            ORDER BY YEAR(game_date_EST);
+            """ % (player, )
+            rows = self.sql_helper(sql)
+            if len(rows) == 0:
+                print("No results found :(")
+            else:
+                for i in range(len(rows)):
+                    t.add_row(rows[i])
+                print(t)
+        
+    def get_score_leader(self):
+        """
+        get the score leader for a given year of each team
+        """
+        year = input("Type the year: \n")
+        t = PrettyTable(['Year', 'Team', 'Player', 'Leading Pts'])
+        sql = """
+        WITH 
+            cte1 AS (SELECT player_id, team_id, AVG(PTS) AS avg_pts 
+                    FROM game_details NATURAL INNER JOIN games 
+                    WHERE YEAR(game_date_EST) = %s
+                    GROUP BY player_id, team_id) 
+        SELECT DISTINCT team_abbreviation, player_name, leading_pts
+        FROM teams 
+            NATURAL INNER JOIN players 
+            NATURAL INNER JOIN cte1 
+            NATURAL INNER JOIN (SELECT team_id, MAX(avg_pts) AS leading_pts 
+                                FROM cte1 
+                                GROUP BY team_id) AS leading_pts_count 
+        WHERE leading_pts = avg_pts 
+        ORDER BY team_abbreviation ASC;
+        """ % (year, )
+        rows = self.sql_helper(sql)
+        if len(rows) == 0:
+            print("The year is no correct")
+        else:
+            for r in rows:
+                r = list(r)
+                r.insert(0, year)
+                t.add_row(r)
+            print(t)
 
     def log_in(self):
         """

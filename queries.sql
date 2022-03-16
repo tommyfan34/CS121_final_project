@@ -10,6 +10,7 @@ FROM game_details NATURAL INNER JOIN players NATURAL INNER JOIN games
 WHERE player_name='Andrew Bogut' AND YEAR(game_date_EST) = 2005
 GROUP BY player_id, player_name;
 
+
 -- query 2
 -- Show the leading player of each team ordered by average points 
 -- per game in the given year.
@@ -20,7 +21,7 @@ WITH
              FROM game_details NATURAL INNER JOIN games 
              WHERE YEAR(game_date_EST) = 2012 
              GROUP BY player_id, team_id) 
-SELECT DISTINCT team_id, team_abbreviation, player_id, player_name, leading_pts
+SELECT DISTINCT team_abbreviation, player_name, leading_pts
 FROM teams 
      NATURAL INNER JOIN players 
      NATURAL INNER JOIN cte1 
@@ -28,4 +29,4 @@ FROM teams
                          FROM cte1 
                          GROUP BY team_id) AS leading_pts_count 
 WHERE leading_pts = avg_pts 
-ORDER BY team_id ASC;
+ORDER BY team_abbreviation ASC;
