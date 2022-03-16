@@ -31,3 +31,22 @@ mysql> quit;
 $ python3 app.py
 ```
 
+## Command line arguments
+[-d] For debug mode
+
+## Features
++ For ordinary users
+  + Look up a player's stats for a given year
+  + Look up each team's score leader
+  + Look up team stats for a given date
++ For admin users
+  + Modify the team information, including the owner, manager and coach
+
+
+## Example users
+We have 2 sample users for testing 
+
+|username|password|is_admin?|
+|--------|--------|---------|
+|tommyfan34|tfpswd|No|
+|NJUWJJ|wjjpswd|Yes|
