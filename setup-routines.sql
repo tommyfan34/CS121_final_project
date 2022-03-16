@@ -1,4 +1,5 @@
--- The function to map a given date to a season
+-- The function to map a given date to a NBA season
+-- The minimal season is 2002 and the max season is 2021
 DROP FUNCTION IF EXISTS date_to_season;
 
 DELIMITER !
@@ -48,3 +49,71 @@ BEGIN
     END IF;
 END !
 DELIMITER ;
+
+-- Return a player's career points, including regular season and playoffs.
+-- Note that the stats are from the season 2002 to season 2021
+DROP FUNCTION IF EXISTS player_career_pts;
+
+DELIMITER !
+CREATE FUNCTION player_career_pts(player_id VARCHAR(20)) 
+RETURNS INTEGER DETERMINISTIC
+BEGIN
+DECLARE total_pts INTEGER;
+
+SELECT SUM(PTS) FROM game_details WHERE game_details.player_id = player_id
+INTO total_pts;
+
+RETURN total_pts;
+END !
+DELIMITER ;
+
+-- The procedure to retrieve the game stats for a team_id given a game_id. This
+-- procedure is useful because the game relation has stats seperated for 
+-- home and guest team and we cannot directly retrieve the stats.
+DROP PROCEDURE IF EXISTS sp_game_stats;
+
+DELIMITER !
+CREATE PROCEDURE sp_game_stats(
+	IN team_id CHAR(10),
+    IN game_id CHAR(8),
+    OUT PTS INT,
+    OUT FG_PCT NUMERIC(4, 3),
+    OUT FT_PCT NUMERIC(4, 3),
+    OUT FG3_PCT NUMERIC(4, 3),
+    OUT AST INT,
+    OUT REB INT
+)
+proc_label: BEGIN
+DECLARE IS_HOME TINYINT(1);
+
+IF (SELECT home_team_id FROM games WHERE games.game_id = game_id) = team_id THEN
+	SELECT 1 INTO IS_HOME;
+ELSEIF (SELECT visitor_team_id FROM games WHERE games.game_id = game_id) = team_id THEN
+	SELECT 0 INTO IS_HOME;
+ELSE LEAVE proc_label;
+END IF;
+IF IS_HOME = 1 THEN
+	SELECT (SELECT PTS_home FROM games WHERE games.game_id = game_id) INTO PTS;
+    SELECT (SELECT FG_PCT_home FROM games WHERE games.game_id = game_id) INTO FG_PCT;
+    SELECT (SELECT FT_PCT_home FROM games WHERE games.game_id = game_id) INTO FT_PCT;
+    SELECT (SELECT FG3_PCT_home FROM games WHERE games.game_id = game_id) INTO FG3_PCT;
+    SELECT (SELECT AST_home FROM games WHERE games.game_id = game_id) INTO AST;
+    SELECT (SELECT REB_home FROM games WHERE games.game_id = game_id) INTO REB;
+ELSE 
+	SELECT (SELECT PTS_away FROM games WHERE games.game_id = game_id) INTO PTS;
+    SELECT (SELECT FG_PCT_away FROM games WHERE games.game_id = game_id) INTO FG_PCT;
+    SELECT (SELECT FT_PCT_away FROM games WHERE games.game_id = game_id) INTO FT_PCT;
+    SELECT (SELECT FG3_PCT_home FROM games WHERE games.game_id = game_id) INTO FG3_PCT;
+    SELECT (SELECT AST_away FROM games WHERE games.game_id = game_id) INTO AST;
+    SELECT (SELECT REB_away FROM games WHERE games.game_id = game_id) INTO REB;
+END IF;
+END !
+DELIMITER ;
+
+-- Sample usage for the sp_games_stats
+-- CALL sp_game_stats('1610612764', '22100213', @pts, @fg_pct, @ft_pct, @fg3_pct, @ast, @reb);
+-- SELECT @pts, @fg_pct, @ft_pct, @fg3_pct, @ast, @reb;
+
+
+
+
