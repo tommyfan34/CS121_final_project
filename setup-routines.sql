@@ -115,5 +115,21 @@ DELIMITER ;
 -- SELECT @pts, @fg_pct, @ft_pct, @fg3_pct, @ast, @reb;
 
 
+-- Trigger for checking the data legitmacy when inserting into the game_details relation. 
+-- The FGM * 2 + FG3M + FTM should be equal to PTS, if not, simply change the primary keys to 
+-- NULL to prevent insertion. The FG3M should also be less than FGM, and each
+-- of the attempted goal should be more or equal to the made goals
+DROP TRIGGER IF EXISTS tr_add_detail;
 
+DELIMITER !
+CREATE TRIGGER tr_add_detail BEFORE INSERT ON game_details FOR EACH ROW
+BEGIN
+	IF NEW.FGM * 2 + NEW.FG3M + NEW.FTM <> NEW.PTS OR NEW.FGA < NEW.FGM OR NEW.FG3A < NEW.FG3M OR NEW.FTA < NEW.FTM
+    OR NEW.FGM < NEW.FG3M OR NEW.FGA < NEW.FG3A THEN
+		SET NEW.game_id = NULL;
+    END IF;
+END!
+DELIMITER ;
 
+-- Sample usage for the tr_add_detail
+-- INSERT INTO game_details VALUES('22100213','1610612764','201950','G','','27:41:00',3,6,2,5,1,1,1,5,2,1,0,1,0,4,2);
