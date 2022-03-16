@@ -16,6 +16,7 @@ We modified the original data and produced the following 5 csv files.
 5. ranking.csv
 
 ## Usage
+```bash
 $ cd your-files
 $ mysql
 mysql> source setup.sql;
@@ -26,4 +27,5 @@ mysql> source grant-permissions.sql;
 mysql> source queries.sql;
 mysql> quit;
 $ python3 app.py
+```
 
