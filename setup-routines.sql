@@ -115,6 +115,34 @@ DELIMITER ;
 -- SELECT @pts, @fg_pct, @ft_pct, @fg3_pct, @ast, @reb;
 
 
+-- Procedure to modify the team information. This procedure is intended for the admin
+-- The team information can be constantly changed, for example the team will change its coach or manager
+-- information such as founded are not changable
+SET SQL_SAFE_UPDATES = 0;
+DROP PROCEDURE IF EXISTS sp_modify_teams;
+
+DELIMITER !
+CREATE PROCEDURE sp_modify_teams(
+	IN team_abbreviation CHAR(3),
+    IN owner             VARCHAR(40),
+    IN manager           VARCHAR(40),
+    IN coach             VARCHAR(40)
+)
+proc_label: BEGIN
+	IF team_abbreviation NOT IN (SELECT team_abbreviation FROM teams) THEN
+		LEAVE proc_label;
+	ELSE
+		UPDATE teams SET teams.owner = owner, teams.manager = manager, teams.coach = coach
+        WHERE teams.team_abbreviation = team_abbreviation;
+    END IF;
+END !
+DELIMITER ;
+
+-- Sample usage of sp_modify_teams
+CALL sp_modify_teams('BOS', 'Wyc Grousbeck', 'Brad Stevens', 'Ime Udoka');
+SELECT * FROM teams WHERE team_abbreviation='BOS';
+
+
 -- Trigger for checking the data legitmacy when inserting into the game_details relation. 
 -- The FGM * 2 + FG3M + FTM should be equal to PTS, if not, simply change the primary keys to 
 -- NULL to prevent insertion. The FG3M should also be less than FGM, and each

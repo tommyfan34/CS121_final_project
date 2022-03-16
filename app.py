@@ -69,6 +69,9 @@ class app:
         else:
             print("  (p) - Look up a player's stats for a given year")
             print("  (s) - Get the score leader for each time for a given year")
+            print("  (g) - Show the game stats of a team on a given date")
+            if self.logged_user.is_admin:
+                print("  (t) - Change the information of a team")
             print("  (c) - Change password")
             print("  (o) - Log out")
         print("  (q) - Exit program")
@@ -92,6 +95,10 @@ class app:
             self.get_player_stats()
         elif self.logged_in and input_val == 's':
             self.get_score_leader()
+        elif self.logged_in and input_val == 't':
+            self.update_teams()
+        elif self.logged_in and input_val == 'g':
+            self.show_game()
 
     def get_player_stats(self):
         """
@@ -168,6 +175,79 @@ class app:
                 t.add_row(r)
             print(t)
 
+    def update_teams(self):
+        """
+        update the team information, including owner, manager and coach.
+        can only be updated by an admin
+        """
+        if self.logged_user is None or not self.logged_user.is_admin:
+            return
+        team = input('Type the abbreviation of the team you want to change, e.g. BOS:\n')
+        sql = """
+        SELECT owner, manager, coach FROM teams WHERE team_abbreviation='%s';
+        """ % (team, )
+        rows = self.sql_helper(sql)
+        if len(rows) == 0:
+            print('There is no such team')
+        else:
+            (owner, manager, coach) = rows[0]
+            print("The owner for %s is %s, the manager is %s, the coach is %s" % (team, owner, manager, coach))
+            new_owner = input("Type the new owner, if you does not want to change, just ENTER \n")
+            if new_owner == '':
+                new_owner = owner
+            new_manager = input("Type the new manager, if you does not want to change, just ENTER \n")
+            if new_manager == '':
+                new_manager = manager
+            new_coach = input("Type the new coach, if you does not want to change, just ENTER \n")
+            if new_coach == '':
+                new_coach = coach
+            sql = """
+            CALL sp_modify_teams('%s', '%s', '%s', '%s');
+            """ % (team, new_owner, new_manager, new_coach, )
+            rows = self.sql_helper(sql, changed=True)
+            print("Now the owner for %s is %s, the manager is %s, the coach is %s" % (team, new_owner, new_manager, new_coach))
+
+
+    def show_game(self):
+        """
+        show the game stats of a team on the given date
+        e.g. 'UTA' on '2003-10-05'
+        """
+        team = input('Type the team abbreviation, e.g. UTA \n')
+        date = input('Type the date of the match, must be in form of YYYY-MM-DD\n')
+        sql = """
+        SELECT DISTINCT team_abbreviation,
+                        PTS_home AS pts,
+                        FG_PCT_home AS fg_pct,
+                        FG_PCT_home AS ft_pct,
+                        AST_home AS ast,
+                        REB_home AS reb 
+        FROM games NATURAL INNER JOIN game_details NATURAL INNER JOIN teams 
+        WHERE game_date_EST = '%s' 
+            AND team_abbreviation = '%s' 
+            AND home_team_id = team_id
+            UNION
+        SELECT DISTINCT team_abbreviation,
+                        PTS_away AS pts,
+                        FG_PCT_away AS fg_pct,
+                        FG_PCT_away AS ft_pct,
+                        AST_away AS ast,
+                        REB_away AS reb 
+        FROM games NATURAL INNER JOIN game_details NATURAL INNER JOIN teams
+        WHERE game_date_EST = '%s' 
+            AND team_abbreviation = '%s'
+            AND visitor_team_id = team_id;
+        """ % (date, team, date, team, )
+        rows = self.sql_helper(sql)
+        if len(rows) == 0:
+            print("There is no matched games")
+        else:
+            t = PrettyTable(["Team", "Pts", "FG_pct", "FT_pct", "Ast", "Reb"])
+            for r in rows:
+                t.add_row(r)
+            print(t)
+
+
     def log_in(self):
         """
         log the user in
@@ -210,13 +290,15 @@ class app:
         """ % (self.logged_user.username, new_pw, )
         self.sql_helper(sql)
         
-    def sql_helper(self, query, err_msg = None):
+    def sql_helper(self, query, err_msg = None, changed=False):
         """
         helper function for calling sql
         """
         try:
             cursor = self.conn.cursor()
             cursor.execute(query)
+            if changed:
+                self.conn.commit()
             rows = cursor.fetchall()
             return rows
         except mysql.connector.Error as err:
