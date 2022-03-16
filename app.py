@@ -107,7 +107,7 @@ class app:
                 AVG(STL) AS avg_steals, AVG(BLK) AS avg_blocks, 
                 AVG(turnover) AS avg_turnovers, AVG(PF)AS avg_personal_fouls 
             FROM game_details NATURAL INNER JOIN players NATURAL INNER JOIN games
-            WHERE player_name='%s' AND YEAR(game_date_EST) = %s
+            WHERE player_name='%s' AND date_to_season(game_date_EST) = %s
             GROUP BY player_id, player_name;
             """ % (player, year, )
             rows = self.sql_helper(sql)
@@ -120,13 +120,13 @@ class app:
                 print(t)
         else:
             sql = """
-            SELECT YEAR(game_date_EST), player_name, AVG(PTS) AS avg_points, 
+            SELECT date_to_season(game_date_EST), player_name, AVG(PTS) AS avg_points, 
                 AVG(OREB+DREB) AS avg_rebounds, AVG(AST) AS avg_assists, 
                 AVG(STL) AS avg_steals, AVG(BLK) AS avg_blocks, 
                 AVG(turnover) AS avg_turnovers, AVG(PF)AS avg_personal_fouls 
             FROM game_details NATURAL INNER JOIN players NATURAL INNER JOIN games
-            WHERE player_name='%s' GROUP BY player_id, player_name, YEAR(game_date_EST)
-            ORDER BY YEAR(game_date_EST);
+            WHERE player_name='%s' GROUP BY player_id, player_name, date_to_season(game_date_EST)
+            ORDER BY date_to_season(game_date_EST);
             """ % (player, )
             rows = self.sql_helper(sql)
             if len(rows) == 0:
@@ -146,7 +146,7 @@ class app:
         WITH 
             cte1 AS (SELECT player_id, team_id, AVG(PTS) AS avg_pts 
                     FROM game_details NATURAL INNER JOIN games 
-                    WHERE YEAR(game_date_EST) = %s
+                    WHERE date_to_season(game_date_EST) = %s
                     GROUP BY player_id, team_id) 
         SELECT DISTINCT team_abbreviation, player_name, leading_pts
         FROM teams 

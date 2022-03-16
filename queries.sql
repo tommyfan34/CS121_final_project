@@ -7,7 +7,7 @@ SELECT player_id, player_name, AVG(PTS) AS avg_points,
        AVG(STL) AS avg_steals, AVG(BLK) AS avg_blocks, 
        AVG(turnover) AS avg_turnovers, AVG(PF)AS avg_personal_fouls 
 FROM game_details NATURAL INNER JOIN players NATURAL INNER JOIN games
-WHERE player_name='Andrew Bogut' AND YEAR(game_date_EST) = 2005
+WHERE player_name='Andrew Bogut' AND date_to_season(game_date_EST) = 2005
 GROUP BY player_id, player_name;
 
 
@@ -19,7 +19,7 @@ GROUP BY player_id, player_name;
 WITH 
     cte1 AS (SELECT player_id, team_id, AVG(PTS) AS avg_pts 
              FROM game_details NATURAL INNER JOIN games 
-             WHERE YEAR(game_date_EST) = 2012 
+             WHERE date_to_season(game_date_EST) = 2012 
              GROUP BY player_id, team_id) 
 SELECT DISTINCT team_abbreviation, player_name, leading_pts
 FROM teams 
