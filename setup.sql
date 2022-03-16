@@ -132,3 +132,6 @@ CREATE TABLE game_details(
   FOREIGN KEY (team_id) REFERENCES teams(team_id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+-- This index helps frequent actions like grouping on player_name.
+CREATE INDEX idx_player_name ON players(player_name);
