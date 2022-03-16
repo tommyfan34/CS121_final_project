@@ -83,3 +83,12 @@ WHERE date_to_season(game_date_EST) = 2012
 GROUP BY player_name 
 ORDER BY avg_pts DESC 
 LIMIT 10;
+
+-- query 6
+-- Counts the number of teams each player has played for in his career.
+-- Shows the 10 players with the highest values.
+SELECT COUNT(DISTINCT team_id) AS teams, player_name 
+FROM players 
+GROUP BY player_name 
+ORDER BY teams DESC
+LIMIT 10;
