@@ -1,4 +1,5 @@
 -- query 1
+-- this corresponds to query 2 in RA part
 -- Search for a given player’s stats for a given year.
 -- The purpose of this query is that fans of a basketball star 
 -- may want to know how this player performed. 
@@ -70,14 +71,24 @@ WHERE standings_date = '2012-11-26' AND conference = 'West'
 ORDER BY win_pct DESC;
 
 -- query 5
--- Show the 10 players with highest points per game this season.
+-- this corresponds to query 1 in RA part
+-- Show the 10 players with highest points per game for a given season.
 -- The purpose of this is to report the players 
 -- who are the leading scorers in the league. 
 SELECT player_name, AVG(PTS) AS avg_pts 
 FROM game_details 
      NATURAL INNER JOIN games 
      NATURAL INNER JOIN players 
-WHERE YEAR(game_date_EST) = 2012 
+WHERE date_to_season(game_date_EST) = 2012 
 GROUP BY player_name 
 ORDER BY avg_pts DESC 
+LIMIT 10;
+
+-- query 6
+-- Counts the number of teams each player has played for in his career.
+-- Shows the 10 players with the highest values.
+SELECT COUNT(DISTINCT team_id) AS teams, player_name 
+FROM players 
+GROUP BY player_name 
+ORDER BY teams DESC
 LIMIT 10;
